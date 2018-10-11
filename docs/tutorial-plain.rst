@@ -91,7 +91,8 @@ Don't forget to create & run migrations:
 
     python manage.py makemigrations
     python manage.py migrate
-    
+
+
 
 Load some test data
 ^^^^^^^^^^^^^^^^^^^
@@ -108,7 +109,7 @@ following:
     $ python ./manage.py loaddata ingredients
 
     Installed 6 object(s) from 1 fixture(s)
-    
+
 Alternatively you can use the Django admin interface to create some data
 yourself. You'll need to run the development server (see below), and
 create a login for yourself too (``./manage.py createsuperuser``).
@@ -528,6 +529,52 @@ This will give us the following results:
 As an exercise, you can try making some queries to ``ingredient``.
 
 Something to keep in mind - since we are using one field several times in our query, we need `aliases <http://graphql.org/learn/queries/#aliases>`__
+
+Picking up more fields from Django models
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Let's add a recipe model with a many-to-one relationship to ingredients, a custom field type ``InventoryJSONField``, and a property ``count_ingredients``.
+
+.. code:: python
+
+    class Recipe(models.Model):
+        name = models.CharField(max_length=100)
+        ingredients = models.ManyToManyField(Ingredient)
+        inventory = InventoryJSONField()
+
+        @property
+        def count_ingredients(self):
+          return self.ingredients.count()
+
+
+        def __str__(self):
+            return self.name
+
+A Graphene-Django schema will need a few extra fields to pick up the relationship with the Ingredient, custom field, and property. Here's an example.
+
+.. code:: python
+
+  import graphene
+  from graphene_django.types import DjangoObjectType
+
+  from cookbook.ingredients.schema import IngredientType
+
+
+  class RecipeType(DjangoObjectType):
+      class Meta:
+          model = Category
+
+      # Mapping to other model
+      ingredients = IngredientType
+      # Property mapping
+      count_ingredients = graphene.Int()
+      # Map the custom InventoryJSONField to a graphene type using a resolver function.
+      InventoryJSONField = graphene.JSONString(resolver=lambda inventory, resolve_info: inventory.to_json())
+
+
+
+
+
 
 
 Summary
