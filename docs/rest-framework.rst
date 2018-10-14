@@ -20,7 +20,7 @@ You can create a Mutation based on a serializer by using the
             serializer_class = MySerializer
 
 Create/Update Operations
----------------------
+-------------------------
 
 By default ModelSerializers accept create and update operations. To
 customize this use the `model_operations` attribute. The update
